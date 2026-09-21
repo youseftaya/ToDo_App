@@ -3,8 +3,10 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 
+import '../../core/app_dialog.dart';
 import '../../core/app_routes.dart';
 import '../../data/model/user_model.dart';
+import '../widgets/custom_text_form_field.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -36,7 +38,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Column(
               children: [
                 const SizedBox(height: 40),
-
                 Stack(
                   children: [
                     Container(
@@ -52,7 +53,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         color: Color(0xFF1D5C9B),
                       ),
                     ),
-
                     Positioned(
                       right: 0,
                       bottom: 2,
@@ -72,9 +72,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 28),
-
                 const Text(
                   'Create Your Profile',
                   style: TextStyle(
@@ -83,9 +81,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     color: Color(0xFF0F172A),
                   ),
                 ),
-
                 const SizedBox(height: 8),
-
                 const Text(
                   'Add Your name and profile picture',
                   textAlign: TextAlign.center,
@@ -94,9 +90,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     color: Color(0xFF94A3B8),
                   ),
                 ),
-
                 const SizedBox(height: 42),
-
                 CustomTextFormField(
                   controller: fullName,
                   label: 'Full Name',
@@ -108,9 +102,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     return null;
                   },
                 ),
-
                 const SizedBox(height: 28),
-
                 MaterialButton(
                   onPressed: () async {
                     if (!_formKey.currentState!.validate()) {
@@ -120,7 +112,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     log(fullName.text);
 
                     try {
-                      _showloading();
+                      showLoading(context);
 
                       var userBox = Hive.box<UserModel>('User');
 
@@ -147,7 +139,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                       Navigator.of(context).pop();
 
-                      _showError(error.toString());
+                      showError(
+                        context,
+                        error.toString(),
+                      );
                     }
                   },
                   color: const Color(0xff3F51B5),
@@ -166,151 +161,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                 ),
-
                 const Spacer(),
               ],
             ),
           ),
         ),
       ),
-    );
-  }
-
-  Future<void> _showloading() async {
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return const AlertDialog(
-          content: Row(
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(width: 20),
-              Text(
-                'Loading...',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Future<void> _showError(String error) async {
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text(
-            'Error',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.red,
-            ),
-          ),
-          content: Text(
-            error,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          actions: [
-            TextButton(
-              child: const Text('Oky'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class CustomTextFormField extends StatelessWidget {
-  const CustomTextFormField({
-    super.key,
-    this.controller,
-    this.validator,
-    required this.label,
-  });
-
-  final TextEditingController? controller;
-  final String? Function(String?)? validator;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF1E293B),
-          ),
-        ),
-
-        const SizedBox(height: 10),
-
-        TextFormField(
-          controller: controller,
-          validator: validator,
-          style: const TextStyle(
-            fontSize: 15,
-            color: Color(0xFF0F172A),
-          ),
-          decoration: InputDecoration(
-            hintText: 'Enter your name',
-            hintStyle: const TextStyle(
-              color: Color(0xFF94A3B8),
-            ),
-            filled: true,
-            fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 16,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(
-                color: Color(0xFFE2E8F0),
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(
-                color: Color(0xFF1D5C9B),
-                width: 1.5,
-              ),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(
-                color: Colors.red,
-              ),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(
-                color: Colors.red,
-                width: 1.5,
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }
