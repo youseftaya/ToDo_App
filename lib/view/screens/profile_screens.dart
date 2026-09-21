@@ -1,4 +1,10 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
+
+import '../../core/app_routes.dart';
+import '../../data/model/user_model.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -8,13 +14,13 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController fullName = TextEditingController();
 
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
   void dispose() {
-    _nameController.dispose();
+    fullName.dispose();
     super.dispose();
   }
 
@@ -92,46 +98,71 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 42),
 
                 CustomTextFormField(
-                  controller: _nameController,
+                  controller: fullName,
                   label: 'Full Name',
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Enter your name';
                     }
+
                     return null;
                   },
                 ),
 
                 const SizedBox(height: 28),
 
-                SizedBox(
-                  width: double.infinity,
+                MaterialButton(
+                  onPressed: () async {
+                    if (!_formKey.currentState!.validate()) {
+                      return;
+                    }
+
+                    log(fullName.text);
+
+                    try {
+                      _showloading();
+
+                      var userBox = Hive.box<UserModel>('User');
+
+                      await userBox.put(
+                        'UserKey',
+                        UserModel(
+                          fullName: fullName.text.trim(),
+                        ),
+                      );
+
+                      if (!mounted) return;
+
+                      Navigator.of(context).pop();
+
+                      Navigator.of(context).pushNamed(
+                        AppRoutes.home,
+                      );
+
+                      var getFullName = userBox.get('UserKey');
+
+                      log(getFullName?.fullName ?? 'Null');
+                    } catch (error) {
+                      if (!mounted) return;
+
+                      Navigator.of(context).pop();
+
+                      _showError(error.toString());
+                    }
+                  },
+                  color: const Color(0xff3F51B5),
+                  padding: const EdgeInsets.all(10),
+                  minWidth: double.infinity,
                   height: 54,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        final String fullName =
-                            _nameController.text.trim();
-
-                        print(fullName);
-
-                        // هنا بعد كده تقدر تبعت fullName للداتا بيز
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1D5C9B),
-                      foregroundColor: Colors.white,
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    child: const Text(
-                      'Continue',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Text(
+                    'Greate',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
                     ),
                   ),
                 ),
@@ -142,6 +173,64 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Future<void> _showloading() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return const AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 20),
+              Text(
+                'Loading...',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _showError(String error) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text(
+            'Error',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.red,
+            ),
+          ),
+          content: Text(
+            error,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          actions: [
+            TextButton(
+              child: const Text('Oky'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -193,14 +282,12 @@ class CustomTextFormField extends StatelessWidget {
               horizontal: 16,
               vertical: 16,
             ),
-
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide: const BorderSide(
                 color: Color(0xFFE2E8F0),
               ),
             ),
-
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide: const BorderSide(
@@ -208,14 +295,12 @@ class CustomTextFormField extends StatelessWidget {
                 width: 1.5,
               ),
             ),
-
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide: const BorderSide(
                 color: Colors.red,
               ),
             ),
-
             focusedErrorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide: const BorderSide(
