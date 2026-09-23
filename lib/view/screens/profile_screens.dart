@@ -39,17 +39,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                 Stack(
                   children: [
-                    Container(
-                      width: 110,
-                      height: 110,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Color(0xFFE5EDF7),
-                      ),
-                      child: const Icon(
-                        Icons.person_rounded,
-                        size: 60,
-                        color: Color(0xFF1D5C9B),
+                    const CircleAvatar(
+                      radius: 55,
+                      backgroundImage: AssetImage(
+                        'assets/image/profile.jpg.jpeg',
                       ),
                     ),
 
@@ -261,9 +254,7 @@ class CustomTextFormField extends StatelessWidget {
             color: Color(0xFF1E293B),
           ),
         ),
-
         const SizedBox(height: 10),
-
         TextFormField(
           controller: controller,
           validator: validator,
