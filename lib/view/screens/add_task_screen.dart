@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/adapters.dart';
 
 import '../../data/model/task_model.dart';
 import '../widgets/custom_material.dart';
@@ -106,11 +107,27 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
               width: double.infinity,
               height: 52,
               child: ElevatedButton(
-                onPressed: () {
+                onPressed: ()async {
                   log("Title: ${_titleController.text}");
                   log("Des: ${_descriptionController.text}");
                   log("Status: $_selectedStatus");
                   log("Color: $colorSelected");
+                  AppDialog.showLoading(context);
+
+                  if (colorSelected == null) {
+                    return;
+                  }
+
+                  var taskBox = Hive.box<TaskModel>('Tasks');
+
+                 await taskBox.add(
+                    TaskModel(
+                      title: _titleController.text,
+                      description: _descriptionController.text,
+                      status: _selectedStatus,
+                      colorHex: colorSelected!,
+                    ),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1D4E89),

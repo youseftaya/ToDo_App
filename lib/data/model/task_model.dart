@@ -1,7 +1,19 @@
-class TaskModel {
+import 'package:hive_flutter/hive_flutter.dart';
+
+part 'task_model.g.dart';
+
+@HiveType(typeId: 1)
+class TaskModel extends HiveObject {
+  @HiveField(0)
   String title;
+
+  @HiveField(1)
   String description;
+
+  @HiveField(2)
   StatusTask status;
+
+  @HiveField(3)
   int colorHex;
 
   TaskModel({
@@ -12,5 +24,14 @@ class TaskModel {
   });
 }
 
-enum StatusTask {pending,done,inProgress}
-  
+@HiveType(typeId: 2)
+enum StatusTask {
+  @HiveField(0)
+  pending,
+
+  @HiveField(1)
+  done,
+
+  @HiveField(2)
+  inProgress,
+}
