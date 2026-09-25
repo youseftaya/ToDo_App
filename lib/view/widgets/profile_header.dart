@@ -31,20 +31,25 @@ class ProfileHeader extends StatelessWidget {
             Positioned(
               right: -2,
               bottom: 0,
-              child: Container(
-                width: 38,
-                height: 38,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Color(0xFF1D5C9B),
-                ),
-                child: IconButton(
-                  onPressed: onPickImage,
-                  padding: EdgeInsets.zero,
-                  icon: const Icon(
-                    Icons.camera_alt_rounded,
-                    size: 19,
-                    color: Colors.white,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: onPickImage,
+                  borderRadius: BorderRadius.circular(22),
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Color(0xFF1D5C9B),
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.camera_alt_rounded,
+                        size: 20,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                 ),
               ),
