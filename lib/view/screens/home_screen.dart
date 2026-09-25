@@ -76,6 +76,16 @@ class HomeScreen extends StatelessWidget {
                     ...tasks.map(
                       (task) => TaskCard(
                         task: task,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => AddTaskScreen(
+                                task: task,
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ),
                 ],

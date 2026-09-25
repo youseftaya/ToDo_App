@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/app_routes.dart';
 
 class HomeHeader extends StatelessWidget {
   const HomeHeader({super.key});
@@ -10,6 +11,28 @@ class HomeHeader extends StatelessWidget {
       children: [
         Row(
           children: [
+            Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: Colors.black87,
+                  size: 20,
+                ),
+                onPressed: () {
+                  Navigator.pushNamed(
+                    context,
+                    AppRoutes.profile,
+                  );
+                },
+              ),
+            ),
+
+            const SizedBox(width: 8),
+
             const CircleAvatar(
               radius: 24,
               backgroundImage: AssetImage(

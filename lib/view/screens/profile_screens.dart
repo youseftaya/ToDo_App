@@ -1,10 +1,13 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
+import '../../core/app_dialog.dart';
 import '../../core/app_routes.dart';
+import '../../core/app_theme.dart';
 import '../../data/model/user_model.dart';
+import '../widgets/profile_button.dart';
+import '../widgets/profile_header.dart';
+import '../widgets/profile_text_field.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -15,8 +18,28 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final TextEditingController fullName = TextEditingController();
-
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  bool isArabic = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final userBox = Hive.box<UserModel>('User');
+    final user = userBox.get('user');
+
+    if (user != null) {
+      fullName.text = user.fullName;
+    }
+
+    final settingsBox = Hive.box('Settings');
+
+    isArabic = settingsBox.get(
+      'arabic',
+      defaultValue: false,
+    );
+  }
 
   @override
   void dispose() {
@@ -24,167 +47,89 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                const SizedBox(height: 40),
+  Future<void> _saveUser() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
 
-                Stack(
-                  children: [
-                    const CircleAvatar(
-                      radius: 55,
-                      backgroundImage: AssetImage(
-                        'assets/image/profile.jpg.jpeg',
-                      ),
-                    ),
+    final userBox = Hive.box<UserModel>('User');
 
-                    Positioned(
-                      right: 0,
-                      bottom: 2,
-                      child: Container(
-                        width: 34,
-                        height: 34,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Color(0xFF1D5C9B),
-                        ),
-                        child: const Icon(
-                          Icons.camera_alt_rounded,
-                          size: 18,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+    final user = UserModel(
+      fullName: fullName.text.trim(),
+    );
 
-                const SizedBox(height: 28),
+    await userBox.put('user', user);
 
-                const Text(
-                  'Create Your Profile',
-                  style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF0F172A),
-                  ),
-                ),
+    if (!mounted) return;
 
-                const SizedBox(height: 8),
+    showLoading(context);
 
-                const Text(
-                  'Add Your name and profile picture',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF94A3B8),
-                  ),
-                ),
+    await Future.delayed(
+      const Duration(seconds:0),
+    );
 
-                const SizedBox(height: 42),
+    if (!mounted) return;
 
-                CustomTextFormField(
-                  controller: fullName,
-                  label: 'Full Name',
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Enter your name';
-                    }
+    Navigator.pop(context);
 
-                    return null;
-                  },
-                ),
-
-                const SizedBox(height: 28),
-
-                MaterialButton(
-                  onPressed: () async {
-                    if (!_formKey.currentState!.validate()) {
-                      return;
-                    }
-
-                    log(fullName.text);
-
-                    try {
-                      _showloading();
-
-                      var userBox = Hive.box<UserModel>('User');
-
-                      await userBox.put(
-                        'UserKey',
-                        UserModel(
-                          fullName: fullName.text.trim(),
-                        ),
-                      );
-
-                      if (!mounted) return;
-
-                      Navigator.of(context).pop();
-
-                      Navigator.of(context).pushNamed(
-                        AppRoutes.home,
-                      );
-
-                      var getFullName = userBox.get('UserKey');
-
-                      log(getFullName?.fullName ?? 'Null');
-                    } catch (error) {
-                      if (!mounted) return;
-
-                      Navigator.of(context).pop();
-
-                      _showError(error.toString());
-                    }
-                  },
-                  color: const Color(0xff3F51B5),
-                  padding: const EdgeInsets.all(10),
-                  minWidth: double.infinity,
-                  height: 54,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: const Text(
-                    'Greate',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-
-                const Spacer(),
-              ],
-            ),
-          ),
-        ),
-      ),
+    Navigator.pushReplacementNamed(
+      context,
+      AppRoutes.home,
     );
   }
 
-  Future<void> _showloading() async {
-    return showDialog<void>(
+  void _toggleTheme() async {
+    final isDark =
+        AppThemeController.themeMode.value == ThemeMode.dark;
+
+    final newDarkMode = !isDark;
+
+    AppThemeController.setDarkMode(newDarkMode);
+
+    final settingsBox = Hive.box('Settings');
+
+    await settingsBox.put(
+      'darkMode',
+      newDarkMode,
+    );
+
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void _showLanguageDialog() {
+    showDialog(
       context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return const AlertDialog(
-          content: Row(
+      builder: (context) {
+        return AlertDialog(
+          title: const Text(
+            'Choose Language',
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              CircularProgressIndicator(),
-              SizedBox(width: 20),
-              Text(
-                'Loading...',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w400,
+              ListTile(
+                leading: const Text(
+                  '🇺🇸',
+                  style: TextStyle(fontSize: 25),
                 ),
+                title: const Text('English'),
+                onTap: () {
+                  _changeLanguage(false);
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: const Text(
+                  '🇪🇬',
+                  style: TextStyle(fontSize: 25),
+                ),
+                title: const Text('العربية'),
+                onTap: () {
+                  _changeLanguage(true);
+                  Navigator.pop(context);
+                },
               ),
             ],
           ),
@@ -193,115 +138,135 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Future<void> _showError(String error) async {
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text(
-            'Error',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.red,
-            ),
-          ),
-          content: Text(
-            error,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          actions: [
-            TextButton(
-              child: const Text('Oky'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
+  void _changeLanguage(bool arabic) async {
+    final settingsBox = Hive.box('Settings');
+
+    await settingsBox.put(
+      'arabic',
+      arabic,
     );
+
+    if (mounted) {
+      setState(() {
+        isArabic = arabic;
+      });
+    }
   }
-}
-
-class CustomTextFormField extends StatelessWidget {
-  const CustomTextFormField({
-    super.key,
-    this.controller,
-    this.validator,
-    required this.label,
-  });
-
-  final TextEditingController? controller;
-  final String? Function(String?)? validator;
-  final String label;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF1E293B),
+    final bool isDarkMode =
+        AppThemeController.themeMode.value == ThemeMode.dark;
+
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 24,
+          ),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                const SizedBox(height: 25),
+
+                // Profile image stays centered.
+                // Icons are positioned above it and slightly to the right.
+                Stack(
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.only(top: 70),
+                      child:Center(
+                      child: ProfileHeader(),
+                    ),
+                    ),
+                    Positioned(
+                      top: 0,
+                      right: 35,
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surface,
+                              borderRadius:
+                                  BorderRadius.circular(12),
+                            ),
+                            child: IconButton(
+                              onPressed: _toggleTheme,
+                              icon: Icon(
+                                isDarkMode
+                                    ? Icons.light_mode_outlined
+                                    : Icons.dark_mode_outlined,
+                                size: 23,
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(width: 10),
+
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surface,
+                              borderRadius:
+                                  BorderRadius.circular(12),
+                            ),
+                            child: IconButton(
+                              onPressed: _showLanguageDialog,
+                              icon: const Icon(
+                                Icons.language,
+                                size: 23,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 42),
+
+                ProfileTextField(
+                  controller: fullName,
+                  label: isArabic
+                      ? 'الاسم بالكامل'
+                      : 'Full Name',
+                  textDirection: isArabic
+                      ? TextDirection.rtl
+                      : TextDirection.ltr,
+                  validator: (value) {
+                    if (value == null ||
+                        value.trim().isEmpty) {
+                      return isArabic
+                          ? 'من فضلك أدخل اسمك'
+                          : 'Please enter your name';
+                    }
+
+                    return null;
+                  },
+                ),
+
+                const SizedBox(height: 25),
+
+                ProfileButton(
+                  onPressed: _saveUser,
+                ),
+
+                const SizedBox(height: 25),
+              ],
+            ),
           ),
         ),
-        const SizedBox(height: 10),
-        TextFormField(
-          controller: controller,
-          validator: validator,
-          style: const TextStyle(
-            fontSize: 15,
-            color: Color(0xFF0F172A),
-          ),
-          decoration: InputDecoration(
-            hintText: 'Enter your name',
-            hintStyle: const TextStyle(
-              color: Color(0xFF94A3B8),
-            ),
-            filled: true,
-            fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 16,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(
-                color: Color(0xFFE2E8F0),
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(
-                color: Color(0xFF1D5C9B),
-                width: 1.5,
-              ),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(
-                color: Colors.red,
-              ),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(
-                color: Colors.red,
-                width: 1.5,
-              ),
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

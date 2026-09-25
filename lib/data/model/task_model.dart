@@ -16,11 +16,20 @@ class TaskModel extends HiveObject {
   @HiveField(3)
   int colorHex;
 
+  @HiveField(4)
+  DateTime? dueDate;
+
+  @HiveField(5)
+  DateTime? reminder;
+
+
   TaskModel({
     required this.title,
     required this.description,
     required this.status,
     required this.colorHex,
+    this.dueDate,
+    this.reminder,
   });
 }
 
