@@ -1,5 +1,8 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../core/app_dialog.dart';
 import '../../core/app_routes.dart';
@@ -19,8 +22,11 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final TextEditingController fullName = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final ImagePicker _imagePicker = ImagePicker();
 
   bool isArabic = false;
+
+  Uint8List? imageBytes;
 
   @override
   void initState() {
@@ -31,6 +37,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (user != null) {
       fullName.text = user.fullName;
+      imageBytes = user.imageBytes;
     }
 
     final settingsBox = Hive.box('Settings');
@@ -47,6 +54,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    final XFile? pickedImage = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+    );
+
+    if (pickedImage == null) {
+      return;
+    }
+
+    final Uint8List bytes = await pickedImage.readAsBytes();
+
+    if (!mounted) return;
+
+    setState(() {
+      imageBytes = bytes;
+    });
+  }
+
   Future<void> _saveUser() async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -56,6 +81,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     final user = UserModel(
       fullName: fullName.text.trim(),
+      imageBytes: imageBytes,
     );
 
     await userBox.put('user', user);
@@ -65,7 +91,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     showLoading(context);
 
     await Future.delayed(
-      const Duration(seconds:0),
+      const Duration(seconds: 0),
     );
 
     if (!mounted) return;
@@ -159,7 +185,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         AppThemeController.themeMode.value == ThemeMode.dark;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor:
+          Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(
@@ -171,16 +198,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 const SizedBox(height: 25),
 
-                // Profile image stays centered.
-                // Icons are positioned above it and slightly to the right.
                 Stack(
                   children: [
-                    const Padding(
-                      padding: EdgeInsets.only(top: 70),
-                      child:Center(
-                      child: ProfileHeader(),
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        top: 70,
+                      ),
+                      child: Center(
+                        child: ProfileHeader(
+                          imageBytes: imageBytes,
+                          onPickImage: _pickImage,
+                        ),
+                      ),
                     ),
-                    ),
+
                     Positioned(
                       top: 0,
                       right: 35,

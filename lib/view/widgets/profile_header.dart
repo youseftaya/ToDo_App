@@ -1,35 +1,51 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 
 class ProfileHeader extends StatelessWidget {
-  const ProfileHeader({super.key});
+  final Uint8List? imageBytes;
+  final VoidCallback onPickImage;
+
+  const ProfileHeader({
+    super.key,
+    this.imageBytes,
+    required this.onPickImage,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         Stack(
+          clipBehavior: Clip.none,
           children: [
-            const CircleAvatar(
+            CircleAvatar(
               radius: 55,
-              backgroundImage: AssetImage(
-                'assets/image/profile.jpg.jpeg',
-              ),
+              backgroundImage: imageBytes != null
+                  ? MemoryImage(imageBytes!)
+                  : const AssetImage(
+                      'assets/image/profile.jpg.jpeg',
+                    ) as ImageProvider,
             ),
 
             Positioned(
-              right: 0,
-              bottom: 2,
+              right: -2,
+              bottom: 0,
               child: Container(
-                width: 34,
-                height: 34,
+                width: 38,
+                height: 38,
                 decoration: const BoxDecoration(
                   shape: BoxShape.circle,
                   color: Color(0xFF1D5C9B),
                 ),
-                child: const Icon(
-                  Icons.camera_alt_rounded,
-                  size: 18,
-                  color: Colors.white,
+                child: IconButton(
+                  onPressed: onPickImage,
+                  padding: EdgeInsets.zero,
+                  icon: const Icon(
+                    Icons.camera_alt_rounded,
+                    size: 19,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),
