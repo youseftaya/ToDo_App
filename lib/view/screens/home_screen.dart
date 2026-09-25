@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:untitled/data/model/task_model.dart';
+import 'package:untitled/data/model/user_model.dart';
 import 'package:untitled/view/screens/add_task_screen.dart';
+
 import '../widgets/home_header.dart';
 import '../widgets/task_statistics.dart';
 import '../widgets/task_card.dart';
@@ -12,6 +14,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Box<TaskModel> taskBox = Hive.box<TaskModel>('Tasks');
+    final Box<UserModel> userBox = Hive.box<UserModel>('User');
 
     return Scaffold(
       body: SafeArea(
@@ -28,68 +31,77 @@ class HomeScreen extends StatelessWidget {
                 .where((task) => task.status == StatusTask.pending)
                 .length;
 
-            return SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 16,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const HomeHeader(),
+            return ValueListenableBuilder(
+              valueListenable: userBox.listenable(),
+              builder: (context, Box<UserModel> userBox, _) {
+                final user = userBox.get('user');
 
-                  const SizedBox(height: 24),
-
-                  TaskStatistics(
-                    totalTasks: tasks.length,
-                    doneTasks: doneTasks,
-                    pendingTasks: pendingTasks,
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
                   ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      HomeHeader(
+                        imageBytes: user?.imageBytes,
+                      ),
 
-                  const SizedBox(height: 28),
+                      const SizedBox(height: 24),
 
-                  const Text(
-                    "Today's Tasks",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
+                      TaskStatistics(
+                        totalTasks: tasks.length,
+                        doneTasks: doneTasks,
+                        pendingTasks: pendingTasks,
+                      ),
 
-                  const SizedBox(height: 16),
+                      const SizedBox(height: 28),
 
-                  if (tasks.isEmpty)
-                    const Center(
-                      child: Padding(
-                        padding: EdgeInsets.only(top: 40),
-                        child: Text(
-                          'No tasks yet',
-                          style: TextStyle(
-                            color: Colors.grey,
-                            fontSize: 16,
-                          ),
+                      const Text(
+                        "Today's Tasks",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
                         ),
                       ),
-                    )
-                  else
-                    ...tasks.map(
-                      (task) => TaskCard(
-                        task: task,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => AddTaskScreen(
-                                task: task,
+
+                      const SizedBox(height: 16),
+
+                      if (tasks.isEmpty)
+                        const Center(
+                          child: Padding(
+                            padding: EdgeInsets.only(top: 40),
+                            child: Text(
+                              'No tasks yet',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 16,
                               ),
                             ),
-                          );
-                        },
-                      ),
-                    ),
-                ],
-              ),
+                          ),
+                        )
+                      else
+                        ...tasks.map(
+                          (task) => TaskCard(
+                            task: task,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => AddTaskScreen(
+                                    task: task,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                    ],
+                  ),
+                );
+              },
             );
           },
         ),

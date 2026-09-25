@@ -1,8 +1,15 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import '../../core/app_routes.dart';
 
 class HomeHeader extends StatelessWidget {
-  const HomeHeader({super.key});
+  final Uint8List? imageBytes;
+
+  const HomeHeader({
+    super.key,
+    this.imageBytes,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -33,11 +40,13 @@ class HomeHeader extends StatelessWidget {
 
             const SizedBox(width: 8),
 
-            const CircleAvatar(
+            CircleAvatar(
               radius: 24,
-              backgroundImage: AssetImage(
-                'assets/image/profile.jpg.jpeg',
-              ),
+              backgroundImage: imageBytes != null
+                  ? MemoryImage(imageBytes!)
+                  : const AssetImage(
+                      'assets/image/profile.jpg.jpeg',
+                    ) as ImageProvider,
             ),
 
             const SizedBox(width: 12),
