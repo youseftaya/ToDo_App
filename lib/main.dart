@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:untitled/core/app_routes.dart';
 import 'package:untitled/core/app_theme.dart';
+import 'package:untitled/core/notification_service.dart';
 import 'package:untitled/data/model/task_model.dart';
 import 'package:untitled/data/model/user_model.dart';
 import 'package:untitled/view/screens/add_task_screen.dart';
@@ -9,13 +10,21 @@ import 'package:untitled/view/screens/home_screen.dart';
 import 'package:untitled/view/screens/profile_screens.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
   await Hive.initFlutter();
+
+  await NotificationService.initialize();
 
   Hive.registerAdapter(UserModelAdapter());
   Hive.registerAdapter(TaskModelAdapter());
   Hive.registerAdapter(StatusTaskAdapter());
 
   await Hive.openBox<UserModel>('User');
+
+  // مسح بيانات البروفايل عند تشغيل التطبيق
+  await Hive.box<UserModel>('User').delete('user');
+
   await Hive.openBox<TaskModel>('Tasks');
   await Hive.openBox('Settings');
 
