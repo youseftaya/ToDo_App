@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -7,6 +8,11 @@ class NotificationService {
       FlutterLocalNotificationsPlugin();
 
   static Future<void> initialize() async {
+    // Notifications are not supported on Web in this setup.
+    if (kIsWeb) {
+      return;
+    }
+
     tz.initializeTimeZones();
 
     tz.setLocalLocation(
@@ -40,6 +46,11 @@ class NotificationService {
     required String body,
     required DateTime dateTime,
   }) async {
+    // Skip notifications on Web.
+    if (kIsWeb) {
+      return;
+    }
+
     final scheduledDate = tz.TZDateTime.from(
       dateTime,
       tz.local,
@@ -60,8 +71,7 @@ class NotificationService {
         android: AndroidNotificationDetails(
           'task_reminders',
           'Task Reminders',
-          channelDescription:
-              'Notifications for task reminders',
+          channelDescription: 'Notifications for task reminders',
           importance: Importance.high,
           priority: Priority.high,
         ),
@@ -72,6 +82,11 @@ class NotificationService {
   }
 
   static Future<void> cancelNotification(int id) async {
+    // Skip notifications on Web.
+    if (kIsWeb) {
+      return;
+    }
+
     await _notifications.cancel(id: id);
   }
 }
